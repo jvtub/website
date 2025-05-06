@@ -1,0 +1,88 @@
+---
+title: 'Setting up a blog website.'
+publishedAt: '2025-05-06'
+summary: 'Running and debugging a Vercel blog template and deploy it on Vercel.'
+---
+
+## The decision to blog
+I've always wanted to have a blog and describe things I am working on.
+In the past this attempt failed often times, because I didn't really focused on the parts that really mattered by getting overwhelmed by thousands of options, and eventually not writing a single sentence of content.
+
+## Provider versus VPS
+A Virtual Private Server (VPS) is a great solution to host your own operating system online, yet to host a static website (that can be captured by a single code base) there are many plug-and-play solutions out there, making the hosting of a VPS unnecessarly much work.
+Hosting a website myself on a VPS thereby as well failed a few times before, because it takes an unnecessary amount of (time) costs and maintainance just for an infrequent visitor.
+
+## Website hosting choice
+Companies offer free services to deploy a static website online.
+First I considered [Github Pages](https://pages.github.com/) which I think is a very popular choice among developers, but I had trouble finding a starting point in the code given the large amount of choices.
+[Vercel](https://vercel.com) provided (a) clear and simple information on how deployment works, (b) provides [templates](https://vercel.com/new/jvtubs-projects/templates) to get started, (c) is free for personal use, and (d) allows to use a custom domain name.
+
+## Deploying a blog template to Vercel
+[Vercel blog template](https://github.com/vercel/examples/tree/main/solutions/blog) installed with `pnpm create next-app --example https://github.com/vercel/examples/tree/main/solutions/blog blog`.
+
+The code itself can be launched by connecting a Github repository to the project.
+The deployment flow is as following:
+Local development -> Push to Github repository -> Fetched by Vercel that builds and deploys automatically.
+
+### Bug on using the asynchronous dynamic API of Nextjs
+On running an error occurs when opening a blog post:
+
+```
+Error: Route "/blog/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at eval (app/blog/[slug]/page.tsx:55:64)
+    at Array.find (<anonymous>)
+    at Blog (app/blog/[slug]/page.tsx:55:28)
+  53 |
+  54 | export default function Blog({ params }) {
+> 55 |   let post = getBlogPosts().find((post) => post.slug === params.slug)
+     |                                                                ^
+  56 |
+  57 |   if (!post) {
+  58 |     notFound()
+ ⨯ [Error: A React Element from an older version of React was rendered. This is not supported. It can happen if:
+- Multiple copies of the "react" package is used.
+- A library pre-bundled an old copy of "react" or "react/jsx-runtime".
+- A compiler tries to "inline" JSX instead of using the runtime.] {
+  digest: '1882718545'
+}
+Error: Route "/blog/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at eval (app/blog/[slug]/page.tsx:15:64)
+    at Array.find (<anonymous>)
+    at Module.generateMetadata (app/blog/[slug]/page.tsx:15:28)
+  13 |
+  14 | export function generateMetadata({ params }) {
+> 15 |   let post = getBlogPosts().find((post) => post.slug === params.slug)
+     |                                                                ^
+  16 |   if (!post) {
+  17 |     return
+  18 |   }
+ GET /blog/static-typing 200 in 1928ms
+```
+Reason is, as mentioned by the [nextjs webpage on dynamic APIs](https://nextjs.org/docs/messages/sync-dynamic-apis), we are incorrectly using `params` like a synchronous property.
+
+Dynamic loading allows to leverage webpage parameters (e.g. the specific URL of the webpage we are visiting) to render a webpage with.
+This feature can be really powerful when building a website rather than just a single page, because it gives the context to React components.
+Since Nextjs v15 the usage of these webpage parameters are asynchronous, mentioned at the [nextjs webpage on dynamic APIs](https://nextjs.org/docs/messages/sync-dynamic-apis).
+
+Solved by awaiting the params and using an async function.
+``` javascript
+export async function generateMetadata({ params: async_params }) {
+    let params = await async_params;
+    let post = getBlogPosts().find((post) => post.slug === params.slug)
+    // ...
+};
+```
+
+
+### Bug on using a deprecated version of React
+Another error occurs when trying to load a blog post:
+```
+A React Element from an older version of React was rendered. This is not supported. It can happen if:
+- Multiple copies of the "react" package is used.
+- A library pre-bundled an old copy of "react" or "react/jsx-runtime".
+- A compiler tries to "inline" JSX instead of using the runtime.
+```
+
+This is fixed by leveraging someone else their merge request [link](https://github.com/vercel/examples/pull/1122) (by kxzb-fun).
+Afterwards it all works fine, and managed to push code and build on Vercel successfully.
+
