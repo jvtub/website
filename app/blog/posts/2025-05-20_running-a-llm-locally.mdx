@@ -1,0 +1,51 @@
+---
+title: 'Running a LLM locally.'
+publishedAt: '2025-05-20'
+summary: 'Finding a SOTA LLM model that is somewhat optimal in to run on a GPU with 6.4GB VRAM.'
+tags: ["ai"]
+---
+
+Getting started with AI-related tool development by building a minimal setup to perform text-generation against a prompt.
+
+{/* video on text generation with Ollama */}
+<div
+    style={{
+    width: '80%',
+    margin: '0 auto',
+    padding: '0px',
+    textAlign: "center"
+    }}
+>
+    <video controls>
+        <source src="/media/2025-05-20 first contact with qwen3.webm" type="video/mp4" />
+        Your browser does not support the video tag.
+    </video>
+    _First contact with qwen3 via ollama._
+</div>
+
+## Approach
+The easiest path I can think of getting started is to run [ollama](https://github.com/ollama/ollama) and pick a SOTA LLM that will fit on the GPU.
+With ollama you can automatically fetch and run some popular models and interact/chat with the model.
+Installing ollama isn't the issue, but finding an appropriate model takes effort.
+
+## Compute vs memory
+How I understand, the general rule of thumb with running LLMs is: the larger it is, the slower it runs, but the smarter it gets.
+So to decide on what trade-offs to make we can look at the most compute and the most memory we are willing to spend on generating new tokens:
+- In terms of compute it probably has to generate at least a few tokens per second (otherwise its super slow).
+- In terms of memory it should fit on the GPU (or RAM if running the model on the CPU) otherwise it won't run at all (and even if it works I assume the LLM will be hit by memory bandwidth botlenecks in RAM and/or VRAM).
+
+
+## Model choice
+At this stage I think it is beneficial for me to generate some trust on using LLMs by focusing on generating good text responses, and thus to neglect the token generation speed (to ignore the compute costs), so to look at the largest possible SOTA model. 
+
+The GPU I have running has 6.4GB of VRAM. 
+This is the hard cap of model size, but note that as well VRAM is necessary for context processing (the KV cache) which scales with sequence length, so it is necessary to keep some space available in VRAM with the model loaded.
+
+As described above I decided to look for the largest model that would fit on the GPU of one of the most prevalent models at the time of writing.
+The model I arrived at is Qwen3 ([blog post](https://qwenlm.github.io/blog/qwen3/), [github](https://github.com/QwenLM/Qwen3), [HF](https://huggingface.co/Qwen)).
+After doing some searching around on the model size and related quantization by checking [Qwen LLM comparison and hardware requirements](https://www.hardware-corner.net/llm-database/Qwen/)
+[and an article on the specific hardware requirements of Qwen3](https://www.hardware-corner.net/guides/qwen3-hardware-requirements/), I found out I can use Qwen3-8B with 4 bit quantization (Q4_K_M) requiring +- 5GB of VRAM. 
+
+## Running
+Ollama actually has this model prepared for import. 
+To pull in qwen3-8B from ollama [instructions](https://ollama.com/library/qwen3) mention to run `ollama run qwen3:8b`.
