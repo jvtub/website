@@ -1,0 +1,218 @@
+---
+title: '(Un)Folding sections in typst'
+publishedAt: '2025-05-17'
+summary: 'Defining a org-mode alike folding mechanism for typst sections in vscode.'
+tags: "thesis"
+---
+
+I created a function `#section` that acts as a wrapper/encapsulation to steer the (un)folding for typst content in vscode editor.
+
+{/* Short intro on the end result, so it is directly clear on what you willconvey in this post. */}
+<div
+    style={{
+    width: '80%',
+    margin: '0 auto',
+    padding: '0px',
+    textAlign: "center"
+    }}
+>
+    <video controls>
+        <source src="/media/2025-05-17 folding and unfolding vscode.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+    </video>
+    _Navigating with keybindings the structure of typst content in the vscode editor._
+</div>
+This video in addition uses vim keybindings, more on that below.
+
+## Purpose
+To me, the ability to fold/unfold sections at different levels is great for maintaining an overview of the structure and content of a thesis section.
+I have used a similar workflow when writing my bachelor's thesis, but the text format (Latex) and the text editor (Atom) I used back then were different, so I need another solution.
+
+## Problem
+In general I write a section in typst in a structure like this:
+```typst
+= Section <label-to-section>
+Intro text
+== Subsection <label-to-subsection>
+Very important text.
+```
+
+However, this is what happens when I fold/unfold.
+<div 
+    style={{
+    width: '80%',
+    margin: '0 auto',
+    padding: '0px',
+    textAlign: "center"
+    }}
+>
+    <video controls>
+        <source src="/media/2025-05-17 folding and unfolding vscode bad.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+    </video>
+    _Usage of typst sections directly for (un)folding._
+</div>
+
+With indentation the text looks like this. It's buggy: At level 2 unfold some level 3 sections are unfolded as well
+<div 
+    style={{
+    width: '80%',
+    margin: '0 auto',
+    padding: '0px',
+    textAlign: "center"
+    }}
+>
+    <img 
+    src="/media/2025-05-17 folding and unfolding bad.png" 
+    alt="Description" 
+    className="w-full rounded-lg shadow-md" 
+    />
+    _Unfolding at level 2 using the default typst section symbols._
+</div>
+
+Even more problematic, I as well encapsulate paragraphs, which is not a subsection but does deserve its own unfold.
+<div 
+    style={{
+    width: '80%',
+    margin: '0 auto',
+    padding: '0px',
+    textAlign: "center"
+    }}
+>
+    <img 
+    src="/media/2025-05-17 folding and unfolding bad 2.png" 
+    alt="Description" 
+    className="w-full rounded-lg shadow-md" 
+    />
+    _Paragraphs belonging to the current indentation level are unfolded (which is incorrect)._
+</div>
+
+## Solution
+I created a basic wrapper function to encapsulate sections.
+```typst
+#let section(title, content) = {
+  return [#title#content]
+}
+```
+We can provide a section title and the content:
+```typst
+#section([= Title to this section], [
+    Content to this section.
+    Note how we can nest recursively:
+    #section([== Subsection], [
+        Content to this subsection.
+        Note how the usage of "==" is necessary to get the section level correct in typst.
+    ])
+])
+```
+In addition it allows to encapsulate paragraphs which do not have to be displayed, by using a custom `hide` function:
+```typst
+#let hide(content) = {}
+```
+To apply it
+```typst
+#section(hide([= This section title is hidden]), [
+    But the content is visible.
+    Ideal for paragraphs.
+])
+```
+
+## Alternative solution
+Vscode provides the option to fold by indentation. 
+This would actually have solved my issue, but I do like to have a separation between comments and paragraphs
+
+Another solution is to extend the folding logic to have proper fold behavior on typst sections (so the `=` symbols, not the `#section`).
+This might be worth to explore another time.
+
+## Extra stuff: Linking folding commands to keybindings
+With vscode I use [vim keybindings extension](https://github.com/VSCodeVim/Vim.git).
+Even though it is not a dire necessity to have it installed (in terms of folding/unfolding), it is very convenient being able to design your own shortcut sequences to use editor commands (such as folding/unfolding).
+I bound folding-related actions under `f`:
+* complete unfold to "f 0"
+* fold to top level with "f 1"
+* fold at level two with "f 2", etcetera. 
+
+Note: When using vim its important to activate the "Vim: Foldfix", so when moving the cursor down/up at a folded line, it will move to the cursor position up/down along the folded text rather than into the hidden text (under the indentation).
+
+### Keybindings configuration
+
+vscode vim Keybindings for folding.
+
+```json
+[
+    // ...
+    {
+        // Unfold everything.
+        "key": "f 0",
+        "command": "editor.unfoldAll",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    {
+        // Fold everything (level 1).
+        "key": "f 1",
+        "command": "editor.foldLevel1",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    {
+        // Fold to level 2.
+        "key": "f 2",
+        "command": "editor.foldLevel2",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    {
+        // Fold to level 3.
+        "key": "f 3",
+        "command": "editor.foldLevel3",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    {
+        // Fold under cursor.
+        "key": "f h",
+        "command": "editor.fold",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    {
+        // Unfold under cursor.
+        "key": "f l",
+        "command": "editor.unfold",
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    }
+]
+```
+We only apply the folding action if we are focusing on an editor and are in normal (thus not "insert" or "visual") mode.
+
+### Bugfix unfolding to a higher level
+We can only fold to a lower level (so we can fold from level 3 to level 2, but not the other way around). 
+First I fixed this by manually unfolding completely and then folding to the level of interest.
+However, it can as wel be automated to perform both steps in sequence, mentioned here [solved](https://github.com/microsoft/vscode/issues/199904#issuecomment-1838715352)
+
+```json
+[
+    // ...
+    {
+        // Fold to level 1.
+        "key": "f 1",
+        "command": "runCommands",
+        "args": {
+            "commands": [
+                "editor.unfoldAll",
+                "editor.foldLevel1"
+            ]
+        },
+        "when": "editorFocus && vim.active && vim.mode == 'Normal'"
+    },
+    // ...
+]
+```
+So this does first a full unfold and then folds back to the specified level.
+
+## Other annoyance with folding: Folding only outside of current scope
+{/* There are two annoyances remaining with the current (un)folding setup: */}
+Fold behavior only occurs outside of the current branch the cursor is at, so assume we are at an arbitrary level 3 section and ask to fold to level 2, it will not fold the part we are currently at.
+
+If we ask to fold completely (to level 1), while we are at some arbitrary position under this branch, it will ignore the entire branch the cursor is in. 
+So, if we intend to only fold the surrounding branches, we must know exactly at what level we are at and fold at one level higher.
+[Others are bothered with this as well](https://github.com/microsoft/vscode/issues/75819)
+
+[fold-plus](https://marketplace.visualstudio.com/items?itemName=dakara.dakara-foldplus) is an extension that claims to have solved this (and alongside provides additional functionality). 
+But it (a) only acts on indentation based and (b) I cannot find the extension in the marketplace and (c) compiling locally doesn't work.
