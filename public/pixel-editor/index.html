@@ -1,38 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Pixel Editor</title>
-    <style>
-        html, body { 
-            margin: 0; 
-            padding: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: #1a1a1a;
-        }
-        canvas { 
-            display: block; 
-            margin: 0 auto;
-        }
-        #bevy {
-            width: 100%;
-            height: 100%;
-        }
-    </style>
-<link rel="modulepreload" href="/pixel-editor/pixel-editor-28011632fe15f30f.js" crossorigin="anonymous" integrity="sha384-Pkv+/jQ8oY9PIfdIzG/9ubJBUkmKf93ZbhaZ4BjEfpiibMSEaeGsfgWAr1AjfMr2"><link rel="preload" href="/pixel-editor-28011632fe15f30f_bg.wasm" crossorigin="anonymous" integrity="sha384-x57hck4cGo5HIxPwW9fFioUvSRurcsSmx7w4XMXJaxDAmGcmOIUHwSQMZyWvGf/V" as="fetch" type="application/wasm"></head>
-<body>
-    <div id="bevy"></div>
-
-<script type="module">
-import init, * as bindings from '/pixel-editor/pixel-editor-28011632fe15f30f.js';
-const wasm = await init({ module_or_path: '/pixel-editor/pixel-editor-28011632fe15f30f_bg.wasm' });
+<!doctype html><meta charset=utf-8><title>Pixel Editor</title><style>html,body{background-color:#1a1a1a;width:100%;height:100%;margin:0;padding:0}canvas{margin:0 auto;display:block}</style><link crossorigin href=/pixel-editor/pixel-editor-c5cf80953c99867a.js integrity=sha384-YK/fyGblVpTlUhwy1O99JkIG5grnHnBqQaonN9N+cCoKz6MiDNp/gy67pQDvhlrR rel=modulepreload><link as=fetch crossorigin href=/pixel-editor/pixel-editor-c5cf80953c99867a_bg.wasm integrity=sha384-qwh5UylRKylZ9yUIN1H7/9Xh5590ZMwzW7zWojTfZybsOHJfYZtjrLIeRdVBwXT7 rel=preload type=application/wasm></head><body><script type=module>import init, * as bindings from '/pixel-editor/pixel-editor-c5cf80953c99867a.js';
+const wasm = await init({ module_or_path: '/pixel-editor/pixel-editor-c5cf80953c99867a_bg.wasm' });
 
 
 window.wasmBindings = bindings;
 
 
-dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
-
-</script></body>
-</html>
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));</script></body></html>
